@@ -1,3 +1,11 @@
+const JsonStringifyWithBigIntSupport = (data: unknown) => {
+  if (data !== undefined) {
+    return JSON.stringify(data, (_, v) =>
+      typeof v === "bigint" ? `${v}#bigint` : v
+    ).replace(/"(-?\d+)#bigint"/g, (_, a) => a);
+  }
+};
+
 export const getHashSync = (str: string) =>
   String(
     str.split("").reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0)
@@ -16,7 +24,7 @@ export const storeGlobalValues = (
   Object.entries(globals)
     .map(([k, v]) => [
       k,
-      typeof v === "function" ? v.toString() : JSON.stringify(v),
+      typeof v === "function" ? v.toString() : JsonStringifyWithBigIntSupport(v),
     ])
     .map(([k, v]) => scriptStore[0].set(k, `const ${k} = ${v};`));
 };
@@ -49,7 +57,7 @@ export const storeFunctionWithArgs = (
       ? `fn${setFn(v)}`
       : typeof v === "undefined"
       ? "undefined"
-      : JSON.stringify(v)
+      : JsonStringifyWithBigIntSupport(v)
   );
   const argsId = getHashSync(argsStrArr.join(""));
   const elId = [id, argsId].join("_");
